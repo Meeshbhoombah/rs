@@ -16,10 +16,10 @@ fn main() {
             .expect("Failed to read line.");
 
         // we recieve input as a String, conversion enables comparison w/ integers 
-        let guess: u32 = guess
-            .trim()
-            .parse()
-            .expect("Please type a number!");
+        let guess: u32 = match guess.trim().parse() {
+            Ok(num) => num,
+            Err(_)  => continue,
+        };
 
         match guess.cmp(&secret_number) {
             Ordering::Less      => println!("Too small!"),
