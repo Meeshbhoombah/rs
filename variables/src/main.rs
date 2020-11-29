@@ -8,4 +8,9 @@ fn main() {
     let y = y + 1;
     let y = y * 2;
     println!("The value of y is: {}", y);
+
+    let spaces = "    ";
+    let spaces = spaces.len();
+    // error if mut
+    // let mut spaces = "   ";
 }
