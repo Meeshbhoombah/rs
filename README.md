@@ -1,4 +1,3 @@
 # Rust
-🏋️‍♂️ Exercises · 🧠 Challenges
 
 
