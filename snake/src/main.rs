@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 extern crate rand;
 extern crate piston_window;
 
