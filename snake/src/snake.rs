@@ -93,17 +93,16 @@ impl Snake {
 
         let mut moving_dir = self.direction;
         match dir {
-            Some(d) => moving_dir = d;
-            None() => {}
+            Some(d) => moving_dir = d,
+            None => {}
         }
 
         match moving_dir {
             Direction::Up => (head_x, head_y - 1),
             Direction::Down => (head_x, head_y + 1),
-            Direction::Left => (head_x - 1, head_y,
+            Direction::Left => (head_x - 1, head_y),
             Direction::Right => (head_x + 1, head_y),
         }
-
     }
 }
 
