@@ -7,7 +7,7 @@ use crate::draw::draw_block;
 // RGB/Opacity
 const SNAKE_COLOR: Color = [0.00, 0.80, 0.00, 1.0];
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Direction {
     Up,
     Down,
@@ -86,6 +86,24 @@ impl Snake {
 
     pub fn head_direction(&self) -> Direction {
         self.direction
+    }
+
+    pub fn next_head(&self, dir: Option<Direction>) -> (i32, i32) {
+        let (head_x, head_y): (i32, i32) = self.head_position();
+
+        let mut moving_dir = self.direction;
+        match dir {
+            Some(d) => moving_dir = d;
+            None() => {}
+        }
+
+        match moving_dir {
+            Direction::Up => (head_x, head_y - 1),
+            Direction::Down => (head_x, head_y + 1),
+            Direction::Left => (head_x - 1, head_y,
+            Direction::Right => (head_x + 1, head_y),
+        }
+
     }
 }
 
