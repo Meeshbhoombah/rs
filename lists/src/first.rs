@@ -5,13 +5,47 @@ struct Node {
     next: Link,
 }
 
+impl Drop for Node {
+    fn drop(&mut self) {
+        self.next.drop();
+    }
+}
+
 enum Link {
     Empty,
     More(Box<Node>),
 }
 
+impl Drop for Box<Node> {
+   fn drop(&mut self) {
+        self.ptr.drop();
+        deallocate(self.ptr);
+   }
+}
+
+impl Drop for Link {
+    fn drop(&mut self) {
+        match *self {
+            Link::Empty => {},
+            Link::More(ref mut boxed_node) => {
+                boxed_node.drop();
+            }
+        }
+    }
+}
+
 pub struct List {
     head: Link,
+}
+
+impl Drop for List {
+    fn drop(&mut self) {
+        let mut cur_link = mem::replace(&mut self.head, Link::Empty);
+
+        while let Link::More(mut boxed_node) = cur_link {
+            cur_link = mem::replace(&mut boxed_node.next, Link::Empty);
+        }
+    }
 }
 
 impl List {
@@ -40,6 +74,7 @@ impl List {
         }
     }
 }
+
 
 #[cfg(test)]
 mod test {
