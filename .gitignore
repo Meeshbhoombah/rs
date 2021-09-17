@@ -12,3 +12,8 @@ Cargo.lock
 
 # Vim
 *.sw*
+
+# WASM
+wasm-pack
+wasm-pack.stamp
+

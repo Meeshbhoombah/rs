@@ -10,4 +10,4 @@ readme = "../README.md"
 edition = "2018"
 
 [dependencies]
-moon = { path = "../../../crates/moon" }
+moon = { git = "https://github.com/MoonZoon/MoonZoon", rev = "457b8d1" }

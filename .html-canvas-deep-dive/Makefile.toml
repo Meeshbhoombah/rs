@@ -6,9 +6,4 @@ min_version = "0.32.15"
 private = true
 namespace = "default"
 
-[tasks.mzoon]
-description = "Run MZoon"
-command = "cargo"
-args = ["run", "--manifest-path", "../../crates/mzoon/Cargo.toml", "${@}"]
-
 
