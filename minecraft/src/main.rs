@@ -6,18 +6,18 @@
 #[derive(Debug)]
 pub struct Block {
     /// We use `i32` to eclipse the largest coordinate possible for a Minecraft
-    /// block
-    ///
-    /// World border is located at X/Z ±29,999,984
+    /// block -- the World Border is located at X/Z ±29,999,984
     x: i32,
     y: i32,
     z: i32,
 }
 
 
-
+/// The maximum altitude for the Overworld is 320
 const MAX_Y_OVERWORLD: i32 = 320;
-const MAX_Y_END_OR_NETHER: i32 = 256;
+
+/// For both the Nether and the End, the maximum altitude is 256
+const MAX_Y_OTHERWORLD: i32 = 256;
 
 const SEA_LEVEL: i32 = 62;
 
