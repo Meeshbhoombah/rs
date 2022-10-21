@@ -33,84 +33,81 @@ pub struct Chunk {
     sw: Block,
 }
 
-impl Chunk {
-    fn nw_corner(&self, b: &Block) -> Block {
-        let n = b.x as f32 / fCHUNK_SIDE_LENGTH;
-        let a = b.z as f32 / fCHUNK_SIDE_LENGTH;
-        
-        let n = n.floor();
-        let a = a.floor();
+pub fn nw_corner(b: &Block) -> Block {
+    let n = b.x as f32 / fCHUNK_SIDE_LENGTH;
+    let a = b.z as f32 / fCHUNK_SIDE_LENGTH;
+    
+    let n = n.floor();
+    let a = a.floor();
 
-        let n = n * fCHUNK_SIDE_LENGTH;
-        let a = a * fCHUNK_SIDE_LENGTH;
+    let n = n * fCHUNK_SIDE_LENGTH;
+    let a = a * fCHUNK_SIDE_LENGTH;
 
-        let x = n as i32;
-        let z = a as i32;
+    let x = n as i32;
+    let z = a as i32;
 
-        Block {
-            x,
-            y: SEA_LEVEL,
-            z
-        }
-    }
-
-    fn ne_corner(&self, b: &Block) -> Block {
-        let n = self.nw_corner(&b);
-
-        let x = n.x + iCHUNK_SIDE_LENGTH;
-        let y = n.y;
-        let z = n.z;
-
-        Block {
-            x,
-            y,
-            z
-        }
-    }
-
-    fn se_corner(&self, b: &Block) -> Block {
-        let n = self.nw_corner(&b);
-
-        let x = n.x + iCHUNK_SIDE_LENGTH;
-        let y = n.y;
-        let z = n.z + iCHUNK_SIDE_LENGTH;
-
-        Block {
-            x,
-            y,
-            z
-        }
-    }
-
-    fn sw_corner(&self, b: &Block) -> Block {
-        let n = self.nw_corner(&b);
-
-        let x = n.x;
-        let y = n.y;
-        let z = n.z + iCHUNK_SIDE_LENGTH;
-
-        Block {
-            x,
-            y,
-            z
-        }     
-    }
-
-    pub fn new_from_block(&self, b: Block) -> Self {
-        let nw = self.nw_corner(&b);
-        let ne = self.ne_corner(&b);
-        let se = self.se_corner(&b);
-        let sw = self.sw_corner(&b);
-
-        Self {
-            nw,
-            ne,
-            se,
-            sw
-        } 
+    Block {
+        x,
+        y: SEA_LEVEL,
+        z
     }
 }
 
+pub fn ne_corner(b: &Block) -> Block {
+    let n = nw_corner(&b);
+
+    let x = n.x + iCHUNK_SIDE_LENGTH;
+    let y = n.y;
+    let z = n.z;
+
+    Block {
+        x,
+        y,
+        z
+    }
+}
+
+pub fn se_corner(b: &Block) -> Block {
+    let n = nw_corner(&b);
+
+    let x = n.x + iCHUNK_SIDE_LENGTH;
+    let y = n.y;
+    let z = n.z + iCHUNK_SIDE_LENGTH;
+
+    Block {
+        x,
+        y,
+        z
+    }
+}
+
+pub fn sw_corner(b: &Block) -> Block {
+    let n = nw_corner(&b);
+
+    let x = n.x;
+    let y = n.y;
+    let z = n.z + iCHUNK_SIDE_LENGTH;
+
+    Block {
+        x,
+        y,
+        z
+    }     
+}
+
+pub fn new_from_block(b: Block) -> Chunk {
+    let nw = nw_corner(&b);
+    let ne = ne_corner(&b);
+    let se = se_corner(&b);
+    let sw = sw_corner(&b);
+
+    Chunk {
+        nw,
+        ne,
+        se,
+        sw
+    } 
+}
 
 /*
 pub fn make_portal_path(points: Vec<Block>) -> Vec<Block> {
@@ -126,5 +123,7 @@ fn main() {
         y: 78,
         z: 910
     };
+
+    let c = new_from_block(tree_house);
 }
 
