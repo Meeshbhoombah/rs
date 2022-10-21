@@ -1,7 +1,7 @@
 /// Minecraft
 /// src/main.rs
 ///
-/// Binary application running random minecraft utility functions
+/// Binary application running random Minecraft utility functions
 
 #[derive(Debug)]
 pub struct Block {
@@ -15,7 +15,6 @@ pub struct Block {
 
 /// The maximum altitude for the Overworld is 320
 const MAX_Y_OVERWORLD: i32 = 320;
-
 /// For both the Nether and the End, the maximum altitude is 256
 const MAX_Y_OTHERWORLD: i32 = 256;
 
@@ -125,5 +124,6 @@ fn main() {
     };
 
     let c = new_from_block(tree_house);
+    println!("{:?}", c);
 }
 
