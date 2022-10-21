@@ -76,43 +76,28 @@ pub fn make_water_channel(points: Vec<Block>) -> Vec<Block> {
 }
 */
 
-fn main() {
-    print!("Results \n");
 
-    // Base
-    let base = Block {
-        x: 6041,
-        y: 83,
-        z: 923
-    };
-
-    let random_block = Block {
-        x: 6056,
-        y: 23,
-        z: 905
-    };
-    
-    let se = find_se_chunk_corner(base);
-    let se_random = find_se_chunk_corner(random_block);
-    println!("{:?}", se);
-    println!("{:?}", se_random);
+pub fn tree_house_center() -> Block {
+    Block {
+        x: 6042,
+        y: 78,
+        z: 910
+    }
 }
 
-#[cfg(tests)]
-mod tests {
-    use super::*;
+pub fn test_find_se_chunk_corner() {
+    let b = tree_house_center();
+    let se = find_se_chunk_corner(b);
+    assert_eq!(se.x, 6032);
+    assert_eq!(se.z, 912);
+}
 
-    pub fn base_block() -> Block {
-        Block {
-            x: 6041,
-            y: 83,
-            z: 932
-        }
-    }
+pub fn tests() {
+    test_find_se_chunk_corner();
+}
 
-    #[test]
-    pub fn find_se_chunk_corner() {
-         
-    }
+
+fn main() {
+    tests();
 }
 
