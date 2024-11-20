@@ -12,6 +12,7 @@ impl<T> BinarySearchTree<T>
 where
     T: Ord,
 {
+    /*
     pub fn insert(&mut self, value: T) {
         match &self.value {
             None => self.value = Some(value),
@@ -34,6 +35,7 @@ where
             }
         }
     }
+    */
 
     /*
     pub fn insert2(&mut self, x: T) {
@@ -61,29 +63,56 @@ where
     }
     */
 
+    pub fn insert(&mut self, x: T) {
+        if self.value.is_none() {
+            self.value = Some(x);
+            self.count += 1;
+            return;
+        }
+
+        let comparable = self.value.as_ref().unwrap();
+        if x < *comparable {
+            if self.left.is_none() {
+                self.left = Some(Box::new(new()));
+            }
+            self.left.as_mut().unwrap().insert(x);
+        } else if x == *comparable {
+            self.count += 1;
+        } else {
+            if self.right.is_none() {
+                self.right = Some(Box::new(new()));
+            }
+            self.right.as_mut().unwrap().insert(x);
+        }
+    }
+
     /*
     pub fn insert(&mut self, x: T) {
         if self.value.is_none() {
             self.value = Some(x); 
             self.count += 1;
+            return;
         }
 
-        let comparable = self.value.unwrap();
-        if x < comparable {
+        let comparable = self.value.as_ref().unwrap();
+        if x < *comparable {
             if self.left.is_none() {
                 self.left = Some(Box::new(new()));
             }
 
-            let left = &mut self.left;
-            left.insert(x);
+            self.left.as_mut().unwrap().insert(x);
         } 
 
-        if x == comparable {
+        if x == *comparable {
             self.count += 1;
         }
 
-        if x > comparable {
-            self.right.insert(x);
+        if x > *comparable {
+            if self.right.is_none() {
+                self.right = Some(Box::new(new()));
+            }
+
+            self.right.as_mut().unwrap().insert(x);
         }
     }
     */
