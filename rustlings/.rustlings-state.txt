@@ -1,6 +1,6 @@
 DON'T EDIT THIS FILE!
 
-tests1
+errors1
 
 lifetimes1
 lifetimes2
