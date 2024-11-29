@@ -1,7 +1,12 @@
 DON'T EDIT THIS FILE!
 
-errors1
+errors6
 
+errors1
+errors2
+errors3
+errors4
+errors5
 lifetimes1
 lifetimes2
 lifetimes3
