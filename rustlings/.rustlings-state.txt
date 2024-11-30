@@ -1,12 +1,17 @@
 DON'T EDIT THIS FILE!
 
-errors6
+move_semantics5
 
+move_semantics1
+move_semantics2
+move_semantics3
+move_semantics4
 errors1
 errors2
 errors3
 errors4
 errors5
+errors6
 lifetimes1
 lifetimes2
 lifetimes3
