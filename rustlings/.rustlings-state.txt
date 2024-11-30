@@ -1,6 +1,6 @@
 DON'T EDIT THIS FILE!
 
-quiz3
+threads1
 
 intro1
 move_semantics1
@@ -21,6 +21,11 @@ traits2
 traits3
 traits4
 traits5
+quiz3
 lifetimes1
 lifetimes2
 lifetimes3
+box1
+rc1
+arc1
+cow1
