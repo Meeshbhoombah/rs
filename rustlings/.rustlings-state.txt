@@ -1,6 +1,6 @@
 DON'T EDIT THIS FILE!
 
-traits4
+generics1
 
 intro1
 move_semantics1
@@ -17,6 +17,8 @@ errors6
 traits1
 traits2
 traits3
+traits4
+traits5
 lifetimes1
 lifetimes2
 lifetimes3
