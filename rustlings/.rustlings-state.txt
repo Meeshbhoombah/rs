@@ -1,6 +1,6 @@
 DON'T EDIT THIS FILE!
 
-structs1
+traits4
 
 intro1
 move_semantics1
@@ -14,6 +14,9 @@ errors3
 errors4
 errors5
 errors6
+traits1
+traits2
+traits3
 lifetimes1
 lifetimes2
 lifetimes3
