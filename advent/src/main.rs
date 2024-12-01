@@ -1,123 +1,68 @@
-use std::env;
-use std::fs;
-use std::error::Error;
-use std::collections::BinaryHeap;
-use std::cmp::Reverse;
+use std::path::Path;
+use std::fs::File;
 
+use keyring::Entry;
+use aes::Aes128;
+use cipher::stream::Ctr128BE;
 use rusqlite::{Connection};
 
-use regex::Regex;
+
+fn get_encryption_key() -> Vec<u8> {
+    let service = "Chrome Safe Storage";
+    let user = whoami::username(); // Get the current username
+    let entry = Entry::new(service, &user).expect("Failed to access keychain");
+    let password = entry.get_password().expect("Failed to retrieve encryption key");
+    password.as_bytes().to_vec()
+}
+
+fn decrypt_cookie(encrypted_value: &[u8], key: &[u8]) -> String {
+    // Chrome's cookie encryption uses AES-128-CTR
+    let nonce_size = 12; // First 12 bytes of the encrypted_value are the nonce
+    let (nonce, ciphertext) = encrypted_value.split_at(nonce_size);
+
+    // Create the AES-128-CTR cipher
+    let cipher = Ctr128BE::<Aes128>::new(key.into(), nonce.into());
+    let mut plaintext = ciphertext.to_vec();
+
+    cipher.apply_keystream(&mut plaintext); // Decrypt in-place
+    String::from_utf8(plaintext).expect("Failed to decode UTF-8")
+}
 
 
 fn main() -> Result<(), Box<dyn Error>> {
 
 
-    let conn = Connection::open(r"/Users/meeshbhoombah/Library/Application Support/Google/Chrome/Default/Cookies")?;
+    // Path to Chrome's Cookies SQLite database
+    let db_path = Path::new("/Users/<YourUsername>/Library/Application Support/Google/Chrome/Default/Cookies");
 
+    // Open the SQLite database
+    let conn = Connection::open(db_path).expect("Failed to open SQLite database");
 
-    let path = env::current_dir()?;
-    println!("The current directory is {}", path.display());
+    // Query for cookies
+    let mut stmt = conn
+        .prepare("SELECT host_key, name, encrypted_value FROM cookies WHERE host_key LIKE '%adventofcode.com%'")
+        .expect("Failed to prepare SQL query");
 
-    // Raw file input
-    // let input: String = fs::read_to_string("day_one_test.txt")?;
-    let input: String = fs::read_to_string("day_one_input.txt")?;
-    // println!("{}", input);
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?, // host_key
+                row.get::<_, String>(1)?, // name
+                row.get::<_, Vec<u8>>(2)?, // encrypted_value
+            ))
+        })
+        .expect("Failed to execute SQL query");
 
+    // Get the encryption key
+    let key = get_encryption_key();
 
-    let mut lists_length = 0;
-    let mut list_zero = BinaryHeap::new();
-    let mut list_one = BinaryHeap::new();
-
-
-    let mut current_list = 0;
-    let pairs = input.split("\n");
-    for pair in pairs {
-        let elements = pair.split("   ");
-        for element in elements {
-            // The list we are adding to atm
-            // println!("{}", current_list);
-
-            // Print each indiviudal location id in dual list setup
-            // println!("{}", element);
-
-            if current_list == 0 {
-                list_zero.push(Reverse(element));
-                current_list = 1;
-            } else {
-                list_one.push(Reverse(element));
-                current_list = 0;
-            }
-        }
-            
-        lists_length += 1;
+    // Decrypt and print the cookies
+    for row in rows {
+        let (host_key, name, encrypted_value) = row.expect("Failed to parse row");
+        let decrypted_value = decrypt_cookie(&encrypted_value, &key);
+        println!("Host: {}, Cookie: {} = {}", host_key, name, decrypted_value);
     }
 
-
-    // For some reason, inputting all values into both min_heaps adds a "" 
-    // value to `list_zero` that we do not need
-    list_zero.pop();
-    lists_length -= 1;
-   
-    /*
-    println!("{:?}", lists_length);
-    println!("{:?}", list_zero);
-    println!("{:?}", list_one);
-    */
-    let mut left_v: Vec<i32> = vec![];
-    let mut right_v: Vec<i32> = vec![];
-
-
-    let mut summed_location_difference = 0;
-
-    let mut i = 0;
-    while i < lists_length {
-        /*
-        println!("zero: {:?}", list_zero.peek());
-        println!("one: {:?}", list_one.peek());
-        */
-
-        // `Reversed` is a tuple
-        let left = list_zero.pop().unwrap().0.parse::<i32>().unwrap();
-        left_v.push(left);
-        let right = list_one.pop().unwrap().0.parse::<i32>().unwrap();
-        right_v.push(right);
-
-        let location_difference = (left - right).abs();
-        // println!("location_difference: {}", location_difference);
-        summed_location_difference += location_difference;
-
-        i += 1;
-
-        // println!("--- NEXT PAIR ---");
-    }
-
-
-    /*
-    println!("TASK 1 RESULT:");
-    println!("{}", summed_location_difference);
-    */
-
-    /*
-    println!("{:?}", left_v);
-    println!("{:?}", right_v);
-    */
-
-    let mut total_similarity_score = 0;
-
-    for number in left_v {
-        // println!("{}",  number);
-        let count_of_number_in_right_v = right_v.iter().filter(|&n| *n == number).count() as i32;
-        let similarity_score = number * count_of_number_in_right_v;
-        total_similarity_score += similarity_score;
-    }
-   
-    /*
-    println!("TASK 1 RESULT:");
-    println!("{}", total_similarity_score);
-    */
-
-
-    Ok(())
 
 }
 
