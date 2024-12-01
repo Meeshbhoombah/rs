@@ -39,8 +39,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 list_one.push(Reverse(element));
                 current_list = 0;
             }
-
-
         }
             
         lists_length += 1;
@@ -57,9 +55,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("{:?}", list_zero);
     println!("{:?}", list_one);
     */
-
-    let mut left_list = list_zero.clone();
-    let mut right_list = list_zero.clone();
+    let mut left_v: Vec<i32> = vec![];
+    let mut right_v: Vec<i32> = vec![];
 
 
     let mut summed_location_difference = 0;
@@ -72,7 +69,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         */
 
         // `Reversed` is a tuple
-        let location_difference = (list_one.pop().unwrap().0.parse::<i32>().unwrap() - list_zero.pop().unwrap().0.parse::<i32>().unwrap()).abs();
+        let left = list_zero.pop().unwrap().0.parse::<i32>().unwrap();
+        left_v.push(left);
+        let right = list_one.pop().unwrap().0.parse::<i32>().unwrap();
+        right_v.push(right);
+
+        let location_difference = (left - right).abs();
         // println!("location_difference: {}", location_difference);
         summed_location_difference += location_difference;
 
@@ -82,8 +84,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
 
-    println!("RESULT:");
+    /*
+    println!("TASK 1 RESULT:");
     println!("{}", summed_location_difference);
+    */
+
+    /*
+    println!("{:?}", left_v);
+    println!("{:?}", right_v);
+    */
+
+    let mut total_similarity_score = 0;
+
+    for number in left_v {
+        // println!("{}",  number);
+        let count_of_number_in_right_v = right_v.iter().filter(|&n| *n == number).count() as i32;
+        let similarity_score = number * count_of_number_in_right_v;
+        total_similarity_score += similarity_score;
+    }
+    
+    println!("TASK 2 RESULT:");
+    println!("{}", total_similarity_score);
 
 
     Ok(())
