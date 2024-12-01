@@ -68,7 +68,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
         // `Reversed` is a tuple
-        let location_difference = list_one.pop().unwrap().0.parse::<i128>().unwrap() - list_zero.pop().unwrap().0.parse::<i128>().unwrap();
+        let location_difference = (list_one.pop().unwrap().0.parse::<i128>().unwrap() - list_zero.pop().unwrap().0.parse::<i128>().unwrap()).abs();
         println!("location_difference: {}", location_difference);
         summed_location_difference += location_difference;
 
