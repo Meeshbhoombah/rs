@@ -58,23 +58,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("{:?}", list_one);
     */
 
+    let mut left_list = list_zero.clone();
+    let mut right_list = list_zero.clone();
+
 
     let mut summed_location_difference = 0;
 
     let mut i = 0;
     while i < lists_length {
+        /*
         println!("zero: {:?}", list_zero.peek());
         println!("one: {:?}", list_one.peek());
-
+        */
 
         // `Reversed` is a tuple
-        let location_difference = (list_one.pop().unwrap().0.parse::<i128>().unwrap() - list_zero.pop().unwrap().0.parse::<i128>().unwrap()).abs();
-        println!("location_difference: {}", location_difference);
+        let location_difference = (list_one.pop().unwrap().0.parse::<i32>().unwrap() - list_zero.pop().unwrap().0.parse::<i32>().unwrap()).abs();
+        // println!("location_difference: {}", location_difference);
         summed_location_difference += location_difference;
 
         i += 1;
 
-        println!("--- NEXT PAIR ---");
+        // println!("--- NEXT PAIR ---");
     }
 
 
