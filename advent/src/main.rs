@@ -4,8 +4,16 @@ use std::error::Error;
 use std::collections::BinaryHeap;
 use std::cmp::Reverse;
 
+use rusqlite::{Connection};
+
+use regex::Regex;
+
 
 fn main() -> Result<(), Box<dyn Error>> {
+
+
+    let conn = Connection::open(r"/Users/meeshbhoombah/Library/Application Support/Google/Chrome/Default/Cookies")?;
+
 
     let path = env::current_dir()?;
     println!("The current directory is {}", path.display());

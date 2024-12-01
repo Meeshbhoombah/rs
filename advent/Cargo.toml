@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+aes = "0.8.4"
+base64 = "0.22.1"
 browsercookie-rs = "0.1.1"
+cipher = "0.4.4"
+keyring = "3.6.1"
+regex = "1.11.1"
 reqwest = "0.12.9"
+rusqlite = "0.32.1"
 
