@@ -102,9 +102,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         let similarity_score = number * count_of_number_in_right_v;
         total_similarity_score += similarity_score;
     }
-    
-    println!("TASK 2 RESULT:");
+   
+    /*
+    println!("TASK 1 RESULT:");
     println!("{}", total_similarity_score);
+    */
 
 
     Ok(())

@@ -3,3 +3,7 @@ name = "advent"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+browsercookie-rs = "0.1.1"
+reqwest = "0.12.9"
+
