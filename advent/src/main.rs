@@ -1,78 +1,76 @@
-use std::process::Command;
+use decrypt_cookies::{Browser, ChromiumBuilder};
+use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::Client;
 use std::error::Error;
-use std::fs;
-use std::path::Path;
-use serde_json::Value;
 
-fn get_aes_key() -> Result<Vec<u8>, Box<dyn Error>> {
-    // Define the expected path to Chrome's Local State file
-    let local_state_path = dirs::home_dir()
-        .unwrap()
-        .join("Library/Application Support/Google/Chrome/Local State");
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    // Initialize ChromiumBuilder to decrypt cookies
+    let chromium = ChromiumBuilder::new(Browser::Chromium)
+        .build()
+        .await?;
+    let all_cookies = chromium.get_cookies_all().await?;
 
-    // Check if the file exists
-    if !local_state_path.exists() {
-        return Err(format!(
-            "Local State file not found at {}",
-            local_state_path.display()
-        )
-        .into());
+    // Manually build the cookie string from specific cookies
+    let mut cookie_string = String::new();
+    for cookie in all_cookies {
+        match cookie.name.as_str() {
+            "_ga" | "session" | "_gid" | "_ga_MHSNPJKWC7" => {
+                if !cookie_string.is_empty() {
+                    cookie_string.push_str("; ");
+                }
+                cookie_string.push_str(&format!("{}={}", cookie.name, cookie.value));
+            }
+            _ => {}
+        }
     }
 
-    // Read the file content
-    let file_content = fs::read_to_string(&local_state_path)?;
-    println!("Local State file content:\n{}", file_content); // Debugging
-
-    // Parse JSON content
-    let local_state: Value = serde_json::from_str(&file_content)?;
-
-    // Ensure the `os_crypt` key exists
-    if !local_state.get("os_crypt").is_some() {
-        return Err("Missing 'os_crypt' key in Local State file".into());
+    if cookie_string.is_empty() {
+        eprintln!("No matching cookies found. Please log in to the website first.");
+        return Ok(());
     }
 
-    // Ensure the `encrypted_key` key exists
-    let encrypted_key = local_state["os_crypt"]["encrypted_key"]
-        .as_str()
-        .ok_or("Missing 'encrypted_key' in Local State")?;
-    println!("Encrypted Key (Base64): {}", encrypted_key); // Debugging
+    // Set custom headers
+    let mut headers = HeaderMap::new();
+    headers.insert("accept", HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
+    headers.insert("accept-language", HeaderValue::from_static("en-US,en;q=0.9"));
+    headers.insert("cache-control", HeaderValue::from_static("no-cache"));
+    headers.insert("cookie", HeaderValue::from_str(&cookie_string)?); // Set the cookies
+    headers.insert("pragma", HeaderValue::from_static("no-cache"));
+    headers.insert("sec-fetch-dest", HeaderValue::from_static("document"));
+    headers.insert("sec-fetch-mode", HeaderValue::from_static("navigate"));
+    headers.insert("sec-fetch-site", HeaderValue::from_static("none"));
+    headers.insert("sec-fetch-user", HeaderValue::from_static("?1"));
+    headers.insert("upgrade-insecure-requests", HeaderValue::from_static("1"));
+    headers.insert("sec-ch-ua", HeaderValue::from_static("\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\""));
+    headers.insert("sec-ch-ua-mobile", HeaderValue::from_static("?1"));
+    headers.insert("sec-ch-ua-platform", HeaderValue::from_static("\"Android\""));
+    headers.insert(
+        "user-agent",
+        HeaderValue::from_static(
+            "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+        ),
+    );
 
-    // Decode the base64-encoded key
-    let encrypted_key = base64::decode(encrypted_key)?;
-    println!("Encrypted Key (Decoded): {:?}", encrypted_key); // Debugging
+    // Create a reqwest Client with default headers
+    let client = Client::builder()
+        .default_headers(headers)
+        .build()?;
 
-    // Strip the "DPAPI" prefix (first 5 bytes)
-    if encrypted_key.len() < 5 {
-        return Err("Encrypted key is too short".into());
-    }
-    let encrypted_key = &encrypted_key[5..];
-    println!("Encrypted Key (Stripped): {:?}", encrypted_key); // Debugging
+    // Define the target URL
+    let url = "https://adventofcode.com/2024/day/1/input";
 
-    // Call the security command to decrypt the key
-    let output = Command::new("security")
-        .arg("decrypt")
-        .arg("-k")
-        .arg("-w")
-        .arg("-s")
-        .arg(std::str::from_utf8(encrypted_key)?)
-        .output()?;
+    // Make the request
+    let response = client.get(url).send().await?;
 
-    // Check if the command was successful
-    if output.status.success() {
-        Ok(output.stdout)
+    // Check and print the response
+    if response.status().is_success() {
+        let body = response.text().await?;
+        println!("Response:\n{}", body);
     } else {
-        Err(format!(
-            "Failed to decrypt AES key: {}",
-            String::from_utf8_lossy(&output.stderr)
-        )
-        .into())
+        eprintln!("Failed to fetch data. Status: {}", response.status());
     }
-}
 
-fn main() {
-    match get_aes_key() {
-        Ok(aes_key) => println!("AES Key (hex): {}", hex::encode(aes_key)),
-        Err(e) => eprintln!("Error retrieving AES key: {}", e),
-    }
+    Ok(())
 }
 
