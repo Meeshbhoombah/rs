@@ -3,109 +3,244 @@ use std::fs;
 use std::fmt;
 
 
+#[derive(Debug)]
+enum Direction {
+    UpLeft,
+    Up,
+    UpRight,
+    Right,
+    DownRight,
+    Down,
+    DownLeft,
+    Left
+}
+
+#[derive(Debug)]
+struct DirectionMatch {
+    direction: Direction,
+    loc: usize
+}
+
+
+#[derive(Debug)]
+struct Size {
+    row: usize,
+    col: usize,
+}
+
+#[derive(Debug)]
 struct WordSearch {
-    contents: Vec<Vec<char>>
+    // row x column
+    size: Size,
+    pointer: usize,
+    contents: Vec<char>
 }
 
 impl WordSearch {
-    fn new() -> Self {
+
+    fn new(input: String) -> Self {
+        let mut lines: Vec<&str> = input.split('\n').collect();
+        // An extra empty string (`""`) is added to the lines when splitting 
+        // the input, we remove this with a `pop()`
+        lines.pop();
+        // println!("{:?}", lines);
+
         WordSearch {
-            contents: vec![]
+            size: Size {
+                row: lines.len(),
+                col: lines[0].len(),
+            },
+            // We know that all WordSearches must be grids equal in its length
+            // of columns and rows (i.e: 10x10, 140x140, or 420x420) -- as a 
+            // result we can simply use the measurement of one length of the 
+            // grid as the value for the pointer, which is the base value for
+            // measuring, in sequence, the number of characters between some
+            // character in the grid, and the character directly above or 
+            // below it
+            pointer: lines.len(),
+            contents: lines.iter()
+                        .flat_map(|s| s.chars())
+                        .collect()
         }
     }
 
 
     fn pprint(&self) {
-        for row in &self.contents {
-            println!("{:?}", row);
-        }
-    }
+        println!("Wordsearch");
+        println!("-----------------------------------------------");
 
+        let mut row = String::from("");
+        for i in 0..self.size.row {
+            for j in 0..self.size.col {
+                row.push(self.contents[i * 10 + j].clone());
 
-    fn find_x(&self) {
-        let mut row_n = 0;
-        let mut col_n = 0;
-
-        for row in &self.contents {
-            col_n = 0;
-
-            for c in row {
-                if *c == 'X' {
-                    println!("found x: {}, {}", row_n, col_n);
-                    self.find_m(row_n, col_n);
+                if j < self.size.col - 1 {
+                    row.push(' ');
                 }
+            } 
 
-                col_n += 1;
+            println!("{}", row);
+            row = String::from("");
+        }
+
+        // println!("{:?}", self.contents);
+        println!("{:?}", self.size);
+    }
+
+    
+    fn find(&self, value: String) {
+        let word: Vec<char> = value.chars().collect();
+
+        let initial_positions = self.find_first_char(&word[0]);
+        // println!("Initial positions: {:?}", initial_positions);
+
+        for pos in initial_positions {
+            let positions = self.find_second_char(&pos, &word[1]);
+            println!("{:?} Initial matches: {:?}", pos, positions);
+
+            /*
+            for i in 2..word.len() {
+                for pos in secondary_position {
+                    self.find_with_direction(pos, word[i]);
+                }
             }
-
-            row_n += 1;
+            */
         }
     }
 
-    fn find_m(&self, x_row: usize, x_col: usize) {
-        let mut possible_m_locations = vec![];
+    fn find_first_char(&self, c: &char) -> Vec<usize> {
+        let mut loc: usize = 0;
+        let mut positions: Vec<usize> = vec![];
+        for character in &self.contents {
+            if character == c {
+                // println!("Found {:?} at {:?}", c, loc);
+                positions.push(loc);
+            }
 
-        let left_up = (x_row.checked_sub(1), x_col.checked_sub(1));
-        possible_m_locations.push(left_up);
+            loc += 1;
+        }
 
-        let up = (x_row.checked_sub(1), Some(x_col));
-        possible_m_locations.push(up);
+        return positions;
+    }
 
-        let right_up = (x_row.checked_sub(1), x_col.checked_add(1));
-        possible_m_locations.push(right_up);
+    fn find_second_char(&self, loc: &usize, c: &char) -> Vec<DirectionMatch> {
+        // println!("At {:?}", loc);
+        // println!("Test: up-left-diag char {:?}", &self.contents[loc - (self.pointer + 1)]);
+        let mut positions: Vec<DirectionMatch> = vec![];
 
-        let right = (Some(x_row), x_col.checked_add(1));
-        possible_m_locations.push(right);
-
-        let right_down = (x_row.checked_add(1), x_col.checked_add(1));
-        possible_m_locations.push(right_down);
-
-        let down = (x_row.checked_add(1), Some(x_col));
-        possible_m_locations.push(down);
-
-        let left_down = (x_row.checked_add(1), x_col.checked_sub(1));
-        possible_m_locations.push(left_down);
-
-        let left = (Some(x_row), x_col.checked_sub(1));
-        possible_m_locations.push(left);
-
-        for mut loc in &mut possible_m_locations {
-            if loc.0.is_none() || loc.1.is_none() {
-                loc.0 = None;
-                loc.1 = None;
+        let mut up_left: usize = 0;
+        if let Some(res) = loc.checked_sub(self.pointer + 1) {
+            up_left = res;
+            if c == &self.contents[up_left] {
+                 positions.push(DirectionMatch {
+                    direction: Direction::UpLeft,
+                    loc: up_left 
+                }) 
             }
         }
-        
-        println!("Possible 'M' locations: M({:?})", possible_m_locations);
+
+        let mut up: usize = 0;
+        if let Some(res) = loc.checked_sub(self.pointer) {
+            up = res;
+            if c == &self.contents[up] {
+                 positions.push(DirectionMatch {
+                    direction: Direction::Up,
+                    loc: up 
+                }) 
+            }
+        }
+
+        let mut up_right: usize = 0;
+        if let Some(res) = loc.checked_sub(self.pointer - 1) {
+            up_right = res;
+            if c == &self.contents[up_right] {
+                 positions.push(DirectionMatch {
+                    direction: Direction::UpRight,
+                    loc: up_right
+                }) 
+            }
+        }
+
+        let mut right: usize = 0;
+        if let Some(res) = loc.checked_add(1) {
+            right = res;
+            if let Some(comp) = &self.contents.get(right) {
+                if comp == &c {
+                    positions.push(DirectionMatch {
+                        direction: Direction::Right,
+                        loc: right 
+                    }) 
+                }
+            }
+        }
+
+        let mut down_right: usize = 0;
+        if let Some(res) = loc.checked_add(self.pointer + 1) {
+            down_right = res;
+            if let Some(comp) = &self.contents.get(down_right) {
+                if comp == &c {
+                    positions.push(DirectionMatch {
+                        direction: Direction::DownRight,
+                        loc: down_right 
+                    }) 
+                }
+            }
+        }
+
+        let mut down: usize = 0;
+        if let Some(res) = loc.checked_add(self.pointer) {
+            down = res;
+            if let Some(comp) = &self.contents.get(down) {
+                if comp == &c {
+                    positions.push(DirectionMatch {
+                        direction: Direction::Down,
+                        loc: down
+                    }) 
+                }
+            }
+        }
+
+        let mut down_left: usize = 0;
+        if let Some(res) = loc.checked_add(self.pointer - 1) {
+            down_left = res;
+            if let Some(comp) = &self.contents.get(down_left) {
+                if comp == &c {
+                    positions.push(DirectionMatch {
+                        direction: Direction::DownLeft,
+                        loc: down_left
+                    }) 
+                }
+            }
+        }
+
+        let mut left: usize = 0;
+        if let Some(res) = loc.checked_sub(self.pointer) {
+            left = res;
+            if let Some(comp) = &self.contents.get(left) {
+                if comp == &c {
+                    positions.push(DirectionMatch {
+                        direction: Direction::Left,
+                        loc: left
+                    }) 
+                }
+            }
+        }
+
+        return positions;
     }
+
 }
 
 
 fn main() -> Result<(), Box<dyn Error>> {
 
+    // let input = fs::read_to_string("./day_four_input.txt")?;
     let input = fs::read_to_string("./day_four_test.txt")?;
     // println!("{:?}", input);
 
-
-    let mut row: Vec<char> = vec![];
-    let mut ws = WordSearch::new();
-
-    for c in input.chars() {
-        // println!("{:?}", c);
-        if c == '\n' {
-            ws.contents.push(row);
-            row = vec![];
-        } else {
-            row.push(c);
-        }
-    }
-
+    let mut ws = WordSearch::new(input);
     ws.pprint();
-
-    ws.find_x();
-    
-
-
+    ws.find(String::from("XMAS"));
 
     Ok(())
 
