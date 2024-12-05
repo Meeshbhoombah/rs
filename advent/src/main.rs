@@ -1,248 +1,149 @@
 use std::error::Error;
 use std::fs;
-use std::fmt;
 
-
-#[derive(Debug)]
+/// Enum to represent directions in the word search
+#[derive(Debug, Clone, PartialEq)]
 enum Direction {
-    UpLeft,
-    Up,
-    UpRight,
-    Right,
-    DownRight,
-    Down,
-    DownLeft,
-    Left
-}
-
-#[derive(Debug)]
-struct DirectionMatch {
-    direction: Direction,
-    loc: usize
-}
-
-
-#[derive(Debug)]
-struct Size {
-    row: usize,
-    col: usize,
+    Horizontal,
+    Vertical,
+    DiagonalLR, // Left-to-Right diagonal
+    DiagonalRL, // Right-to-Left diagonal
 }
 
 #[derive(Debug)]
 struct WordSearch {
-    // row x column
-    size: Size,
-    pointer: usize,
-    contents: Vec<char>
+    grid: Vec<Vec<char>>,
+    bad_char: Vec<usize>, // Precomputed bad character table for the pattern
 }
 
 impl WordSearch {
+    // Create a new WordSearch instance from input and precompute bad_char table
+    pub fn new(input: &str, word: &str) -> Self {
+        let grid: Vec<Vec<char>> = input
+            .lines()
+            .map(|line| line.chars().collect())
+            .collect();
 
-    fn new(input: String) -> Self {
-        let mut lines: Vec<&str> = input.split('\n').collect();
-        // An extra empty string (`""`) is added to the lines when splitting 
-        // the input, we remove this with a `pop()`
-        lines.pop();
-        // println!("{:?}", lines);
-
-        WordSearch {
-            size: Size {
-                row: lines.len(),
-                col: lines[0].len(),
-            },
-            // We know that all WordSearches must be grids equal in its length
-            // of columns and rows (i.e: 10x10, 140x140, or 420x420) -- as a 
-            // result we can simply use the measurement of one length of the 
-            // grid as the value for the pointer, which is the base value for
-            // measuring, in sequence, the number of characters between some
-            // character in the grid, and the character directly above or 
-            // below it
-            pointer: lines.len(),
-            contents: lines.iter()
-                        .flat_map(|s| s.chars())
-                        .collect()
-        }
+        let bad_char = Self::compute_bad_char_table(word);
+        WordSearch { grid, bad_char }
     }
 
+    // Compute the bad character table for Boyer-Moore
+    fn compute_bad_char_table(pattern: &str) -> Vec<usize> {
+        let m = pattern.len();
+        let mut bad_char = vec![m; 256]; // ASCII character range
 
-    fn pprint(&self) {
-        println!("Wordsearch");
-        println!("-----------------------------------------------");
-
-        let mut row = String::from("");
-        for i in 0..self.size.row {
-            for j in 0..self.size.col {
-                row.push(self.contents[i * 10 + j].clone());
-
-                if j < self.size.col - 1 {
-                    row.push(' ');
-                }
-            } 
-
-            println!("{}", row);
-            row = String::from("");
+        for (i, &c) in pattern.as_bytes().iter().enumerate() {
+            bad_char[c as usize] = m - 1 - i;
         }
 
-        // println!("{:?}", self.contents);
-        println!("{:?}", self.size);
+        bad_char
     }
 
-    
-    fn find(&self, value: String) {
-        let word: Vec<char> = value.chars().collect();
+    // Boyer-Moore algorithm to find occurrences of a pattern in a text
+    fn boyer_moore(&self, text: &[char], pattern: &[char]) -> usize {
+        let mut count = 0;
+        let m = pattern.len();
+        let n = text.len();
 
-        let initial_positions = self.find_first_char(&word[0]);
-        // println!("Initial positions: {:?}", initial_positions);
-
-        for pos in initial_positions {
-            let positions = self.find_second_char(&pos, &word[1]);
-            println!("{:?} Initial matches: {:?}", pos, positions);
-
-            /*
-            for i in 2..word.len() {
-                for pos in secondary_position {
-                    self.find_with_direction(pos, word[i]);
-                }
-            }
-            */
+        if m == 0 || m > n {
+            return 0;
         }
+
+        let mut s = 0;
+        while s <= n - m {
+            let mut j = (m - 1) as isize;
+
+            while j >= 0 && pattern[j as usize] == text[s + j as usize] {
+                j -= 1;
+            }
+
+            if j < 0 {
+                count += 1; // Found an occurrence
+                s += if s + m < n {
+                    self.bad_char[text[s + m] as usize]
+                } else {
+                    1
+                };
+            } else {
+                s += self.bad_char[text[s + j as usize] as usize].max(1);
+            }
+        }
+
+        count
     }
 
-    fn find_first_char(&self, c: &char) -> Vec<usize> {
-        let mut loc: usize = 0;
-        let mut positions: Vec<usize> = vec![];
-        for character in &self.contents {
-            if character == c {
-                // println!("Found {:?} at {:?}", c, loc);
-                positions.push(loc);
-            }
+    // General function to search in a specific direction
+    fn search(&self, word: &str, direction: Direction) -> usize {
+        let word_chars: Vec<char> = word.chars().collect();
+        let word_reversed: Vec<char> = word.chars().rev().collect();
+        let mut count = 0;
 
-            loc += 1;
+        match direction {
+            Direction::Horizontal => {
+                for row in &self.grid {
+                    count += self.boyer_moore(row, &word_chars);
+                    count += self.boyer_moore(row, &word_reversed);
+                }
+            }
+            Direction::Vertical => {
+                let cols = self.grid[0].len();
+                for c in 0..cols {
+                    let column: Vec<char> = self.grid.iter().map(|row| row[c]).collect();
+                    count += self.boyer_moore(&column, &word_chars);
+                    count += self.boyer_moore(&column, &word_reversed);
+                }
+            }
+            Direction::DiagonalLR | Direction::DiagonalRL => {
+                let rows = self.grid.len();
+                let cols = self.grid[0].len();
+                for start in 0..(rows + cols - 1) {
+                    let mut diagonal = Vec::new();
+                    for i in 0..=start {
+                        let j = start - i;
+                        if direction == Direction::DiagonalLR && i < rows && j < cols {
+                            diagonal.push(self.grid[i][j]);
+                        } else if direction == Direction::DiagonalRL && j < rows && i < cols {
+                            diagonal.push(self.grid[j][cols - 1 - i]);
+                        }
+                    }
+                    count += self.boyer_moore(&diagonal, &word_chars);
+                    count += self.boyer_moore(&diagonal, &word_reversed);
+                }
+            }
         }
 
-        return positions;
+        count
     }
 
-    fn find_second_char(&self, loc: &usize, c: &char) -> Vec<DirectionMatch> {
-        // println!("At {:?}", loc);
-        // println!("Test: up-left-diag char {:?}", &self.contents[loc - (self.pointer + 1)]);
-        let mut positions: Vec<DirectionMatch> = vec![];
+    // Search for all occurrences of a word in all directions
+    pub fn find_all(&self, word: &str) -> usize {
+        let directions = vec![
+            Direction::Horizontal,
+            Direction::Vertical,
+            Direction::DiagonalLR,
+            Direction::DiagonalRL,
+        ];
 
-        let mut up_left: usize = 0;
-        if let Some(res) = loc.checked_sub(self.pointer + 1) {
-            up_left = res;
-            if c == &self.contents[up_left] {
-                 positions.push(DirectionMatch {
-                    direction: Direction::UpLeft,
-                    loc: up_left 
-                }) 
-            }
-        }
-
-        let mut up: usize = 0;
-        if let Some(res) = loc.checked_sub(self.pointer) {
-            up = res;
-            if c == &self.contents[up] {
-                 positions.push(DirectionMatch {
-                    direction: Direction::Up,
-                    loc: up 
-                }) 
-            }
-        }
-
-        let mut up_right: usize = 0;
-        if let Some(res) = loc.checked_sub(self.pointer - 1) {
-            up_right = res;
-            if c == &self.contents[up_right] {
-                 positions.push(DirectionMatch {
-                    direction: Direction::UpRight,
-                    loc: up_right
-                }) 
-            }
-        }
-
-        let mut right: usize = 0;
-        if let Some(res) = loc.checked_add(1) {
-            right = res;
-            if let Some(comp) = &self.contents.get(right) {
-                if comp == &c {
-                    positions.push(DirectionMatch {
-                        direction: Direction::Right,
-                        loc: right 
-                    }) 
-                }
-            }
-        }
-
-        let mut down_right: usize = 0;
-        if let Some(res) = loc.checked_add(self.pointer + 1) {
-            down_right = res;
-            if let Some(comp) = &self.contents.get(down_right) {
-                if comp == &c {
-                    positions.push(DirectionMatch {
-                        direction: Direction::DownRight,
-                        loc: down_right 
-                    }) 
-                }
-            }
-        }
-
-        let mut down: usize = 0;
-        if let Some(res) = loc.checked_add(self.pointer) {
-            down = res;
-            if let Some(comp) = &self.contents.get(down) {
-                if comp == &c {
-                    positions.push(DirectionMatch {
-                        direction: Direction::Down,
-                        loc: down
-                    }) 
-                }
-            }
-        }
-
-        let mut down_left: usize = 0;
-        if let Some(res) = loc.checked_add(self.pointer - 1) {
-            down_left = res;
-            if let Some(comp) = &self.contents.get(down_left) {
-                if comp == &c {
-                    positions.push(DirectionMatch {
-                        direction: Direction::DownLeft,
-                        loc: down_left
-                    }) 
-                }
-            }
-        }
-
-        let mut left: usize = 0;
-        if let Some(res) = loc.checked_sub(self.pointer) {
-            left = res;
-            if let Some(comp) = &self.contents.get(left) {
-                if comp == &c {
-                    positions.push(DirectionMatch {
-                        direction: Direction::Left,
-                        loc: left
-                    }) 
-                }
-            }
-        }
-
-        return positions;
+        directions
+            .iter()
+            .map(|dir| self.search(word, dir.clone()))
+            .sum()
     }
-
 }
 
-
 fn main() -> Result<(), Box<dyn Error>> {
+    // Read input from a file
+    let input = fs::read_to_string("day_four_input.txt")?;
+    let word = "XMAS";
 
-    // let input = fs::read_to_string("./day_four_input.txt")?;
-    let input = fs::read_to_string("./day_four_test.txt")?;
-    // println!("{:?}", input);
+    // Create the WordSearch instance
+    let word_search = WordSearch::new(&input, word);
 
-    let mut ws = WordSearch::new(input);
-    ws.pprint();
-    ws.find(String::from("XMAS"));
+    // Find all occurrences of the word
+    let count = word_search.find_all(word);
+    println!("The word '{}' appears {} times.", word, count);
 
     Ok(())
-
 }
 
