@@ -84,9 +84,6 @@ impl  MiddlePage {
     }
 
     fn sum(&self) -> i32 {
-
-        let sum = 0;
-
         let mut valid_page_groups = vec![];
         for page_group in &self.page_groups {
             println!("{:?}", page_group);
@@ -117,7 +114,12 @@ impl  MiddlePage {
             }
         }
 
-        println!("{:?}", valid_page_groups);
+        let mut sum = 0;
+        for page in valid_page_groups {
+            let middle = (page.len() as f32 / 2 as f32).floor() as usize;
+            // println!("{:?}", middle);
+            sum += page[middle];
+        }
 
         return sum;
     }
@@ -128,13 +130,18 @@ impl  MiddlePage {
 
 fn main() {
 
-    // let input = fs::read_to_string("./day_five_input.txt").unwrap();
-    let input = fs::read_to_string("./day_five_test.txt").unwrap();
+    let input = fs::read_to_string("./day_five_input.txt").unwrap();
+    // let input = fs::read_to_string("./day_five_test.txt").unwrap();
     // println!("{:?}", input);
 
     let mut mp = MiddlePage::new();
-    mp.load(input);
-    mp.sum();
+
+    if let Err(e) = mp.load(input) {
+        println!("Error loading input -- MiddlePage: {:?}", e);
+    };
+
+    let sum = mp.sum();
+    println!("Final sum first star: {:?}", sum);
 
 }
 
