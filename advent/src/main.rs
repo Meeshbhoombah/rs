@@ -19,8 +19,8 @@ impl  MiddlePage {
         }
     }
 
-    fn parse(& mut self, input: String) -> Result<(), Box<dyn Error>> {
-        let mut lines: Vec<&str> = input.split('\n').collect();
+    fn load(& mut self, input: String) -> Result<(), Box<dyn Error>> {
+        let lines: Vec<&str> = input.split('\n').collect();
         // println!("{:?}", lines);
 
 
@@ -83,6 +83,33 @@ impl  MiddlePage {
         Ok(())
     }
 
+    fn sum(&self) -> i32 {
+
+        let sum = 0;
+
+        for page_group in &self.page_groups {
+            println!("{:?}", page_group);
+
+            for page in page_group {
+                if let Some(values) = self.orderings.get(page) {
+                    // TODO: parse order pairs to construct a HashMap of 
+                    // orderings such that each key is every number that is
+                    // listed as being necessitated to come after a said 
+                    // number
+                    //
+                    // Currently, the HashMap stores orderings where each key
+                    // is a number that needs to come before a set of numbers,
+                    // which is the value
+                    println!("In orderings: {:?} -- {:?}", page, values);
+                } else {
+                    println!("Not in orderings: {:?}", page);
+                };
+            }
+        }
+
+        return sum;
+    }
+
 }
 
 
@@ -94,7 +121,8 @@ fn main() {
     // println!("{:?}", input);
 
     let mut mp = MiddlePage::new();
-    mp.parse(input);
+    mp.load(input);
+    mp.sum();
 
 }
 
