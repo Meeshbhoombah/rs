@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use std::error::Error;
 use std::fs;
 
 
@@ -18,7 +19,7 @@ impl  MiddlePage {
         }
     }
 
-    fn parse(& mut self, input: String) {
+    fn parse(& mut self, input: String) -> Result<(), Box<dyn Error>> {
         let mut lines: Vec<&str> = input.split('\n').collect();
         // println!("{:?}", lines);
 
@@ -35,7 +36,14 @@ impl  MiddlePage {
 
                 let mut op_i32: Vec<i32> = vec![];
                 for page in ordering_pair_str {
-                    op_i32.push(page.parse::<i32>().expect("Not an integer."))
+                    match page.parse::<i32>() {
+                        Ok(v) => {
+                            op_i32.push(v);
+                        },
+                        Err(e) => {
+                            return Err(Box::new(e));
+                        }
+                    }
                 }
 
                 // println!("{:?}", op_i32);
@@ -55,7 +63,14 @@ impl  MiddlePage {
                 
                 let mut pg_i32: Vec<i32> = vec![];
                 for page in page_group_str {
-                    pg_i32.push(page.parse::<i32>().expect("Not an integer"));
+                    match page.parse::<i32>() {
+                        Ok(v) => {
+                            pg_i32.push(v);
+                        },
+                        Err(e) => {
+                            return Err(Box::new(e));
+                        }
+                    }
                 }
 
                 self.page_groups.push(pg_i32);
@@ -64,7 +79,8 @@ impl  MiddlePage {
 
         // println!("{:?}", self.orderings);
         // println!("{:?}", self.page_groups);
-    
+
+        Ok(())
     }
 
 }
