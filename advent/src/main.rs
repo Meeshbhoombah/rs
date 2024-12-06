@@ -48,12 +48,12 @@ impl  MiddlePage {
 
                 // println!("{:?}", op_i32);
 
-                match self.orderings.entry(op_i32[0]) {
+                match self.orderings.entry(op_i32[1]) {
                     Entry::Occupied(v) => {
-                        v.into_mut().push(op_i32[1]);
+                        v.into_mut().push(op_i32[0]);
                     },
                     Entry::Vacant(v) => {
-                        v.insert(vec![op_i32[1]]);
+                        v.insert(vec![op_i32[0]]);
                     }
                 };
 
@@ -87,25 +87,37 @@ impl  MiddlePage {
 
         let sum = 0;
 
+        let mut valid_page_groups = vec![];
         for page_group in &self.page_groups {
             println!("{:?}", page_group);
 
-            for page in page_group {
-                if let Some(values) = self.orderings.get(page) {
-                    // TODO: parse order pairs to construct a HashMap of 
-                    // orderings such that each key is every number that is
-                    // listed as being necessitated to come after a said 
-                    // number
-                    //
-                    // Currently, the HashMap stores orderings where each key
-                    // is a number that needs to come before a set of numbers,
-                    // which is the value
-                    println!("In orderings: {:?} -- {:?}", page, values);
-                } else {
-                    println!("Not in orderings: {:?}", page);
-                };
+            let mut all_disallowed_values: Vec<i32> = vec![];
+            let is_not_valid_page_group = 'page_group_ordering_false: {
+                for page in page_group {
+                    if let Some(disallowed_values) = self.orderings.get(page) {
+                        println!("Has disallowed vals: {:?} -- {:?}", page, disallowed_values);
+                        all_disallowed_values.extend(disallowed_values);
+                    } else {
+                        println!("No disallowed vals: {:?}", page);
+                    };
+
+                    if all_disallowed_values.contains(&page) {
+                        println!("Out of order printing: {:?}", page);
+                        break 'page_group_ordering_false true;
+                    }
+                    // println!("All disallowed vals: {:?}", all_disallowed_values);
+                }
+
+                valid_page_groups.push(page_group);
+                false
+            };
+
+            if is_not_valid_page_group {
+                continue;
             }
         }
+
+        println!("{:?}", valid_page_groups);
 
         return sum;
     }
