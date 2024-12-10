@@ -1,143 +1,113 @@
 use std::fs;
-use std::process;
+use std::error::Error;
 
-fn up(map_width: usize, pos: usize) -> usize {
-    pos - map_width
+
+fn math(o: &Vec<i32>, i: i32, p: usize, target: i32) -> Option<(), None> {
+    if let None == o.get(p) {
+        return None;
+    }
+
+    let sum = i + o[p];
+    if sum < t {
+        if let Some(res) == math(o, sum, p + 1, t) {
+            return (res);
+        }
+    }
+
+    let prod = i * o[p];
+    if prod < t {
+        if let Some(res) == math(o, prod, t) {
+            return Some(res);
+        };
+    }
+
+    if sum == t {
+        Some(prev, o[p]);
+    }
+
+    if prod == t {
+        return Some(prev, o[p]);
+    }
+
+
+    if n * m > t {
+        return None; 
+    }
+
+    if n + m > t {
+        return None;
+    }
+
+    return Some(operable[n], operable[m], r) {
+
+    }
+
 }
 
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
 
-    let input = fs::read_to_string("./day_six_input.txt").unwrap();
-    // let input = fs::read_to_string("./day_six_test.txt").unwrap();
-    println!("{:?}", input);
-
-
-    let mut map_width = 0;
-    for c in input.chars() {
-        if c == '\n' {
+    // let input = fs::read_to_string("./day_seven_input.txt")?;
+    let input = fs::read_to_string("./day_seven_test.txt")?;
+    // println!("{:?}", input);
+   
+    let total_calibration_result = false;
+    let mut lines = input.split('\n');
+    for line in lines {
+        println!("{:?}", line);
+        if line == "" {
+            // Final line of input is empty -- end of input file, break to
+            // exit the file
             break;
         }
+        
 
-        map_width += 1;
-    }
-
-    // println!("{:?}", map_width);
+        let mut numbers: Vec<&str> = line.split(' ').collect();
 
 
-    let mut map = vec![];
-    let mut start_pos: usize = 0;
-    
-    let mut i: usize = 0;
-    for c in input.chars() {
-        if c == '^' {
-            start_pos = i; 
+        let mut can_be_calibrated = false;
+
+        
+        let fin = numbers[0].split(':')
+                    .collect::<Vec<&str>>()[0]
+                    .parse::<i32>()
+                    .expect("ParseIntError: {:?}");
+
+
+        let mut operables: Vec<i32> = vec![];
+        for i in 1..numbers.len() {
+            operables.push(numbers[i].parse::<i32>()?);
         }
 
-        if c == '\n' {
-            continue;
-        } else {
-            map.push(c);
+        
+        println!("{:?}", operable);
+
+        
+        for i in operables.len() {
+            let possible_paths = 2 ** (operables.len() - 1);
+            let mut all_paths = false;
+            let mut path_count = 0;
+
+            while (!all_paths) {
+                if let Some(res) = match math (o, operable[0], 1, fin) {
+                    can_be_calibrated = true; 
+                }
+                
+                if path_count == possible_paths {
+                    all_paths = true;
+                } else {
+                    path_count += 1;
+                }
+            }
         }
 
-        i += 1;
-    }
 
-    // println!("{:?}", map);
-    // println!("{:?}", start_pos);
-    
-    #[derive(Debug, Copy, Clone)]
-    enum Direction {
-        Up,
-        Right,
-        Down,
-        Left
-    }
-
-    fn move_gaurd(p: usize, d: Direction) -> usize {
-        match d {
-            Direction::Up => {
-                p.checked_sub(10).expect("Up directional sub fail.")
-            },
-            Direction::Right => {
-                p.checked_add(1).expect("Up directional sub fail.")
-            },
-            Direction::Down => {
-                p.checked_add(10).expect("Up directional sub fail.")
-            },
-            Direction::Left => {
-                p.checked_sub(1).expect("Up directional sub fail.")
-            },
+        if can_be_calibrated {
+            total_calibration_result += fin; 
         }
     }
 
-    fn right_turn(d: Direction) -> Direction {
-        match d {
-            Direction::Up => {
-                Direction::Right
-            },
-            Direction::Right => {
-                Direction::Down 
-            },
-            Direction::Down => {
-                Direction::Left
-            },
-            Direction::Left => {
-                Direction::Up
-            },
-        }
-    }
-
-    fn hit_wall(p: usize, d: Direction) -> usize {
-        match d {
-            Direction::Up => {
-                p.checked_add(10).expect("Up directional sub fail.")
-            },
-            Direction::Right => {
-                p.checked_sub(1).expect("Up directional sub fail.")
-            },
-            Direction::Down => {
-                p.checked_sub(10).expect("Up directional sub fail.")
-            },
-            Direction::Left => {
-                p.checked_add(1).expect("Up directional sub fail.")
-            },
-        }
-    }
-
-
-    let mut visits = vec![];
-
-    let mut exit = false; 
-    let mut pos = start_pos;
-    let mut current_dir = Direction::Up;
-
-    while !exit {
-
-        println!("{:?}", current_dir);
-        if pos > map.len() {
-            println!("{:?}", visits);
-            println!("{:?}", visits.len() - 1);
-            process::exit(1) 
-        }
-
-        let c = map[pos];
-        println!("{:?}", c);
-        if c == '#' {
-            println!("HIT WALL");
-            visits.pop();
-            pos = hit_wall(pos, current_dir);
-            current_dir = right_turn(current_dir);
-        }
-
-        pos = move_gaurd(pos, current_dir);
-
-        if visits.contains(&pos) {
-            continue;
-        } else {
-            visits.push(pos);
-        }
-    }
+    Ok(())
 
 }
 
