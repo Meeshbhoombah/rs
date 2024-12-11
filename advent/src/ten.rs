@@ -22,6 +22,18 @@ impl fmt::Display for E {
 
 
 #[derive(Debug)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left
+}
+
+
+type Elevation = (usize, Direction);
+
+
+#[derive(Debug)]
 struct Trail {
     map: Vec<i8>,
     trailheads: Vec<usize>,
@@ -80,46 +92,83 @@ impl Trail {
         }
     } 
 
-    fn find_valid_directions(&self, pos: usize) -> Vec<usize> {
-    // fn find_valid_directions(pos: usize, from: Option<Direction>) -> Vec<usize> {
+    fn find_valid_directions(
+        &self, 
+        pos: usize, 
+        from: Option<Direction>
+    ) -> Option<Vec<Elevation>> {
         let mut vd = vec![];
 
-        if let Some(e) = self.map.get(pos - self.side_len) {
-            if *e == self.map[pos] + 1 {
-                vd.push(pos - self.side_len);
+       
+        let mut avoid: Direction =
+        if from.is_some() {
+            let avoid 
+        }
+
+
+        if let Some(i) = pos.checked_sub(self.side_len) {
+            if let Some(e) = self.map.get(i) {
+                if *e == self.map[pos] + 1 {
+                    vd.push((i, Direction::Up));
+                }
             }
         }
 
-        if let Some(e) = self.map.get(pos + 1) {
-            if *e == self.map[pos] + 1 {
-                vd.push(pos + 1);
+        if let Some(i) = pos.checked_add(1) {
+            if let Some(e) = self.map.get(i) {
+                if *e == self.map[pos] + 1 {
+                    vd.push((i, Direction::Right));
+                }
             }
         }
 
-        if let Some(e) = self.map.get(pos + self.side_len) {
-            if *e == self.map[pos] + 1 {
-                vd.push(pos + self.side_len);
+        if let Some(i) = pos.checked_add(self.side_len) {
+            if let Some(e) = self.map.get(i) {
+                if *e == self.map[pos] + 1 {
+                    vd.push((i, Direction::Down));
+                }
             }
         }
 
-        if let Some(e) = self.map.get(pos - 1) {
-            if *e == self.map[pos] + 1 {
-                vd.push(pos - 1);
+        if let Some(i) = pos.checked_sub(1) {
+            if let Some(e) = self.map.get(i) {
+                if *e == self.map[pos] + 1 {
+                    vd.push((i, Direction::Left));
+                }
             }
         }
 
-        return vd;
+        if vd.is_empty() {
+            return None;
+        } else {
+            return Some(vd);
+        }
     }
 
 
     fn find_all_trails(&self, start_pos: usize) -> i32 {
         let mut q = VecDeque::new();
 
-        if let Some(valid_directions) = self.find_valid_directions(start_pos) {
+        if let Some(valid_directions) = self.find_valid_directions(start_pos, None) {
             for vd in valid_directions {
-                q.push(vd);
+                q.push_front(vd);
             }
         };
+
+        // println!("Trailhead at {:?}: ValidDirections({:?})", start_pos, q);
+
+        for elevation in &q {
+            // println!("{:?}", i);
+            if let Some(valid_directions) = self.find_valid_directions(elevation.0, Some(elevation.1)) {
+                for vd in valid_directions {
+                    q.push_front(vd);
+                }
+            };
+        }
+
+        println!("Trailhead at {:?}: ValidDirections({:?})", start_pos, q);
+
+        return q.len() as i32;
     }
 
 
@@ -127,7 +176,7 @@ impl Trail {
         let mut sum = 0;
 
         for trailhead in &self.trailheads {
-            let trails = self.find_all_trails(trailhead);
+            let trails = self.find_all_trails(*trailhead);
             sum += trails;
         }
 
@@ -146,7 +195,7 @@ pub fn run(input: String) -> Result<(), Box<dyn Error>> {
     // println!("{:?}", t.map.len());
     // println!("{:?}", t.side_len);
     // println!("{:?}", t.trailheads);
-
+    println!("{:?}", t.sum_trailheads());
 
     Ok(())
 
